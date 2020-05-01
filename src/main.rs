@@ -12,6 +12,7 @@ struct LogEntry {
     level: String,
     #[serde(rename(deserialize = "@timestamp"))]
     timestamp: String,
+    logger_name: String,
     stack_trace: Option<String>,
 }
 
@@ -30,9 +31,10 @@ fn main() {
 fn print_log_line(line: String) -> Result<(), Error> {
     let log: LogEntry = serde_json::from_str(&line)?;
     println!(
-        "{} {} {}{}",
+        "{} {} {}{}{}",
         time(&log),
         level(&log),
+        logger(&log),
         log.message,
         stack_trace(&log)
     );
@@ -52,6 +54,14 @@ fn level(log: &LogEntry) -> String {
         "WARN" => format!("{}{}", color::Fg(color::Yellow), log.level),
         "INFO" => format!("{}{}", color::Fg(color::White), log.level),
         _ => format!("{}{}", color::Fg(color::Green), log.level),
+    }
+}
+
+fn logger(log: &LogEntry) -> String {
+    let parts: Vec<&str> = log.logger_name.split('.').collect();
+    match parts.last() {
+        Some(name) => format!("{}: ", name),
+        _ => "".to_owned(),
     }
 }
 
