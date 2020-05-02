@@ -35,7 +35,7 @@ fn print_log_line(line: String) -> Result<(), Error> {
         time(&log),
         level(&log),
         logger(&log),
-        log.message,
+        message(&log),
         stack_trace(&log)
     );
     Ok(())
@@ -52,7 +52,7 @@ fn level(log: &LogEntry) -> String {
     match log.level.as_ref() {
         "ERROR" | "FATAL" => format!("{}{}", color::Fg(color::Red), log.level),
         "WARN" => format!("{}{}", color::Fg(color::Yellow), log.level),
-        "INFO" => format!("{}{}", color::Fg(color::White), log.level),
+        "INFO" => format!("{}{}", color::Fg(color::Reset), log.level),
         _ => format!("{}{}", color::Fg(color::Green), log.level),
     }
 }
@@ -65,9 +65,13 @@ fn logger(log: &LogEntry) -> String {
     }
 }
 
+fn message(log: &LogEntry) -> String {
+    format!("{}{}", color::Fg(color::Reset), log.message)
+}
+
 fn stack_trace(log: &LogEntry) -> String {
     match &log.stack_trace {
-        Some(trace) => format!("\n{}{}", color::Fg(color::LightWhite), trace),
+        Some(trace) => format!("\n{}{}", color::Fg(color::Reset), trace),
         _ => "".to_owned(),
     }
 }
