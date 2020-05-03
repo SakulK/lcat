@@ -14,14 +14,13 @@ struct LogEntry {
 }
 
 #[derive(Deserialize, Debug, PartialEq, PartialOrd)]
-#[serde(rename_all = "UPPERCASE")]
 pub enum Level {
-    Trace,
-    Debug,
-    Info,
-    Warn,
-    Error,
-    Fatal,
+    TRACE,
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    FATAL,
 }
 
 pub fn parse_and_format(line: String, min_level: &Level) -> Option<String> {
@@ -32,7 +31,7 @@ pub fn parse_and_format(line: String, min_level: &Level) -> Option<String> {
             } else {
                 None
             }
-        },
+        }
         _ => Some(line),
     }
 }
@@ -61,9 +60,9 @@ fn time(log: &LogEntry) -> String {
 
 fn level(log: &LogEntry) -> String {
     match log.level {
-        Level::Error | Level::Fatal => format!("{}{:?}", color::Fg(color::Red), log.level),
-        Level::Warn => format!("{}{:?}", color::Fg(color::Yellow), log.level),
-        Level::Info => format!("{}{:?}", color::Fg(color::Reset), log.level),
+        Level::ERROR | Level::FATAL => format!("{}{:?}", color::Fg(color::Red), log.level),
+        Level::WARN => format!("{}{:?}", color::Fg(color::Yellow), log.level),
+        Level::INFO => format!("{}{:?}", color::Fg(color::Reset), log.level),
         _ => format!("{}{:?}", color::Fg(color::Green), log.level),
     }
 }

@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 mod lcat;
-use structopt::StructOpt;
 use std::path::PathBuf;
+use structopt::StructOpt;
 
 /// Pretty printing logstash-style json logs
 #[derive(StructOpt, Debug)]
@@ -28,16 +28,15 @@ fn main() {
         _ => Box::new(BufReader::new(std::io::stdin())),
     };
     let min_level = if opt.warn {
-        lcat::Level::Warn
+        lcat::Level::WARN
     } else if opt.error {
-        lcat::Level::Error
+        lcat::Level::ERROR
     } else {
-        lcat::Level::Trace
+        lcat::Level::TRACE
     };
     for line in reader.lines() {
-        match lcat::parse_and_format(line.unwrap(), &min_level) {
-            Some(log) => println!("{}", log),
-            _ => (),
+        if let Some(log) = lcat::parse_and_format(line.unwrap(), &min_level) {
+            println!("{}", log);
         }
     }
 }
