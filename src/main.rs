@@ -1,8 +1,8 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-mod lcat;
 use std::path::PathBuf;
 use structopt::StructOpt;
+mod lcat;
 
 /// Pretty printing logstash-style json logs
 #[derive(StructOpt, Debug)]
@@ -21,20 +21,30 @@ struct Opt {
     file: Option<PathBuf>,
 }
 
+impl Opt {
+    fn min_level(&self) -> lcat::Level {
+        if self.warn {
+            lcat::Level::WARN
+        } else if self.error {
+            lcat::Level::ERROR
+        } else {
+            lcat::Level::TRACE
+        }
+    }
+
+    fn reader(&self) -> Box<dyn BufRead> {
+        if let Some(file) = &self.file {
+            Box::new(BufReader::new(File::open(file).unwrap()))
+        } else {
+            Box::new(BufReader::new(std::io::stdin()))
+        }
+    }
+}
+
 fn main() {
     let opt = Opt::from_args();
-    let reader: Box<dyn BufRead> = match opt.file {
-        Some(file) => Box::new(BufReader::new(File::open(file).unwrap())),
-        _ => Box::new(BufReader::new(std::io::stdin())),
-    };
-    let min_level = if opt.warn {
-        lcat::Level::WARN
-    } else if opt.error {
-        lcat::Level::ERROR
-    } else {
-        lcat::Level::TRACE
-    };
-    for line in reader.lines() {
+    let min_level = opt.min_level();
+    for line in opt.reader().lines() {
         if let Some(log) = lcat::parse_and_format(line.unwrap(), &min_level) {
             println!("{}", log);
         }

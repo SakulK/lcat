@@ -24,15 +24,14 @@ pub enum Level {
 }
 
 pub fn parse_and_format(line: String, min_level: &Level) -> Option<String> {
-    match serde_json::from_str::<LogEntry>(&line) {
-        Ok(log) => {
-            if &log.level >= min_level {
-                Some(format(&log))
-            } else {
-                None
-            }
+    if let Ok(log) = serde_json::from_str::<LogEntry>(&line) {
+        if &log.level >= min_level {
+            Some(format(&log))
+        } else {
+            None
         }
-        _ => Some(line),
+    } else {
+        Some(line)
     }
 }
 
@@ -48,13 +47,14 @@ fn format(log: &LogEntry) -> String {
 }
 
 fn time(log: &LogEntry) -> String {
-    match DateTime::parse_from_rfc3339(&log.timestamp) {
-        Ok(date) => format!(
+    if let Ok(date) = DateTime::parse_from_rfc3339(&log.timestamp) {
+        format!(
             "{}{}",
             color::Fg(color::LightBlack),
             date.format("%m-%d %T%.3f")
-        ),
-        _ => format!("{}{}", color::Fg(color::LightBlack), &log.timestamp),
+        )
+    } else {
+        format!("{}{}", color::Fg(color::LightBlack), &log.timestamp)
     }
 }
 
@@ -69,9 +69,10 @@ fn level(log: &LogEntry) -> String {
 
 fn logger(log: &LogEntry) -> String {
     let parts: Vec<&str> = log.logger_name.split('.').collect();
-    match parts.last() {
-        Some(name) => format!("{}: ", name),
-        _ => "".to_owned(),
+    if let Some(name) = parts.last() {
+        format!("{}: ", name)
+    } else {
+        "".to_owned()
     }
 }
 
@@ -80,8 +81,9 @@ fn message(log: &LogEntry) -> String {
 }
 
 fn stack_trace(log: &LogEntry) -> String {
-    match &log.stack_trace {
-        Some(trace) => format!("\n{}{}", color::Fg(color::Reset), trace),
-        _ => "".to_owned(),
+    if let Some(trace) = &log.stack_trace {
+        format!("\n{}{}", color::Fg(color::Reset), trace)
+    } else {
+        "".to_owned()
     }
 }
