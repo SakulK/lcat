@@ -23,16 +23,14 @@ pub enum Level {
     FATAL,
 }
 
-pub fn parse_and_format(line: String, min_level: &Level) -> Option<String> {
-    if let Ok(log) = serde_json::from_str::<LogEntry>(&line) {
+pub fn parse_and_format(line: &str, min_level: &Level) -> Result<Option<String>, serde_json::error::Error> {
+    serde_json::from_str::<LogEntry>(line).map(|log|
         if &log.level >= min_level {
             Some(format(&log))
         } else {
             None
         }
-    } else {
-        Some(line)
-    }
+    )
 }
 
 fn format(log: &LogEntry) -> String {

@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use structopt::StructOpt;
+use std::error;
 mod lcat;
 
 /// Pretty printing logstash-style json logs
@@ -32,21 +33,25 @@ impl Opt {
         }
     }
 
-    fn reader(&self) -> Box<dyn BufRead> {
+    fn reader(&self) -> Result<Box<dyn BufRead>, std::io::Error> {
         if let Some(file) = &self.file {
-            Box::new(BufReader::new(File::open(file).unwrap()))
+            Ok(Box::new(BufReader::new(File::open(file)?)))
         } else {
-            Box::new(BufReader::new(std::io::stdin()))
+            Ok(Box::new(BufReader::new(std::io::stdin())))
         }
     }
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn error::Error>> {
     let opt = Opt::from_args();
     let min_level = opt.min_level();
-    for line in opt.reader().lines() {
-        if let Some(log) = lcat::parse_and_format(line.unwrap(), &min_level) {
-            println!("{}", log);
+    for line in opt.reader()?.lines() {
+        let line = line?;
+        match lcat::parse_and_format(&line, &min_level) {
+            Ok(Some(log)) => println!("{}", log),
+            Ok(None) => (),
+            Err(_) => println!("{}", line),
         }
     }
+    Ok(())
 }
