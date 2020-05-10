@@ -1,8 +1,9 @@
+use std::error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use std::error;
+mod colors;
 mod lcat;
 
 /// Pretty printing logstash-style json logs
