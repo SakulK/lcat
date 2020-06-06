@@ -18,6 +18,14 @@ struct Opt {
     #[structopt(short, long)]
     warn: bool,
 
+    /// show only logs with level INFO or higher
+    #[structopt(short, long)]
+    info: bool,
+
+    /// ignore lines which fail to parse as logstash json (by default they are printed without changes)
+    #[structopt(short, long)]
+    logstash_only: bool,
+
     /// path to file with logs
     #[structopt(name = "FILE", parse(from_os_str))]
     file: Option<PathBuf>,
@@ -29,6 +37,8 @@ impl Opt {
             lcat::Level::WARN
         } else if self.error {
             lcat::Level::ERROR
+        } else if self.info {
+            lcat::Level::INFO
         } else {
             lcat::Level::TRACE
         }
@@ -50,8 +60,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         let line = line?;
         match lcat::parse_and_format(&line, &min_level) {
             Ok(Some(log)) => println!("{}", log),
-            Ok(None) => (),
-            Err(_) => println!("{}", line),
+            Err(_) if !opt.logstash_only => println!("{}", line),
+            _ => (),
         }
     }
     Ok(())
