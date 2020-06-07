@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 mod colors;
 mod lcat;
+use lcat::*;
 
 /// Pretty printing logstash-style json logs
 #[derive(StructOpt, Debug)]
@@ -26,21 +27,33 @@ struct Opt {
     #[structopt(short, long)]
     logstash_only: bool,
 
+    /// disables stacktrace printing
+    #[structopt(short, long)]
+    no_stacktraces: bool,
+
     /// path to file with logs
     #[structopt(name = "FILE", parse(from_os_str))]
     file: Option<PathBuf>,
 }
 
 impl Opt {
-    fn min_level(&self) -> lcat::Level {
+    fn min_level(&self) -> Level {
         if self.warn {
-            lcat::Level::WARN
+            Level::WARN
         } else if self.error {
-            lcat::Level::ERROR
+            Level::ERROR
         } else if self.info {
-            lcat::Level::INFO
+            Level::INFO
         } else {
-            lcat::Level::TRACE
+            Level::TRACE
+        }
+    }
+
+    fn stack_trace_mode(&self) -> StackTraceMode {
+        if self.no_stacktraces {
+            StackTraceMode::SKIP
+        } else {
+            StackTraceMode::FULL
         }
     }
 
@@ -56,9 +69,10 @@ impl Opt {
 fn main() -> Result<(), Box<dyn error::Error>> {
     let opt = Opt::from_args();
     let min_level = opt.min_level();
+    let stack_trace_mode = opt.stack_trace_mode();
     for line in opt.reader()?.lines() {
         let line = line?;
-        match lcat::parse_and_format(&line, &min_level) {
+        match parse_and_format(&line, &min_level, &stack_trace_mode) {
             Ok(Some(log)) => println!("{}", log),
             Err(_) if !opt.logstash_only => println!("{}", line),
             _ => (),
