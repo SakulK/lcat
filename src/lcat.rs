@@ -12,20 +12,21 @@ struct LogEntry {
     stack_trace: Option<String>,
 }
 
-#[derive(Deserialize, Debug, PartialEq, PartialOrd)]
+#[derive(Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum Level {
-    TRACE,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    FATAL,
+    Trace,
+    Debug,
+    Info,
+    Warn,
+    Error,
+    Fatal,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum StackTraceMode {
-    FULL,
-    SKIP,
+    Full,
+    Skip,
 }
 
 pub fn parse_and_format(
@@ -45,11 +46,11 @@ pub fn parse_and_format(
 fn format(log: &LogEntry, stack_trace_mode: &StackTraceMode) -> String {
     format!(
         "{} {} {}{}{}",
-        time(&log),
-        level(&log),
-        logger(&log),
-        message(&log),
-        stack_trace(&log, stack_trace_mode)
+        time(log),
+        level(log),
+        logger(log),
+        message(log),
+        stack_trace(log, stack_trace_mode)
     )
 }
 
@@ -63,9 +64,9 @@ fn time(log: &LogEntry) -> String {
 
 fn level(log: &LogEntry) -> String {
     match log.level {
-        Level::ERROR | Level::FATAL => format!("{}{:?}", ERROR_COLOR, log.level),
-        Level::WARN => format!("{}{:?}", WARN_COLOR, log.level),
-        Level::INFO => format!("{}{:?}", INFO_COLOR, log.level),
+        Level::Error | Level::Fatal => format!("{}{:?}", ERROR_COLOR, log.level),
+        Level::Warn => format!("{}{:?}", WARN_COLOR, log.level),
+        Level::Info => format!("{}{:?}", INFO_COLOR, log.level),
         _ => format!("{}{:?}", OTHER_COLOR, log.level),
     }
 }
@@ -85,7 +86,7 @@ fn message(log: &LogEntry) -> String {
 
 fn stack_trace(log: &LogEntry, stack_trace_mode: &StackTraceMode) -> String {
     match &log.stack_trace {
-        Some(trace) if *stack_trace_mode == StackTraceMode::FULL => {
+        Some(trace) if *stack_trace_mode == StackTraceMode::Full => {
             format!("\n{}{}", STACKTRACE_COLOR, trace)
         }
         _ => "".to_owned(),
@@ -109,11 +110,11 @@ mod tests {
     fn test_parse_and_format() {
         let expected = format!(
             "{}{} {}{} {}{}",
-            TIME_COLOR, "05-04 11:50:24.758", INFO_COLOR, "INFO Name:", MESSAGE_COLOR, "test"
+            TIME_COLOR, "05-04 11:50:24.758", INFO_COLOR, "Info Name:", MESSAGE_COLOR, "test"
         );
         assert_eq!(
             expected,
-            parse_and_format(INFO_LOG, &Level::TRACE, &StackTraceMode::FULL)
+            parse_and_format(INFO_LOG, &Level::Trace, &StackTraceMode::Full)
                 .unwrap()
                 .unwrap()
         );
@@ -122,30 +123,30 @@ mod tests {
     #[test]
     fn test_parse_and_format_filtering() {
         assert!(
-            parse_and_format(INFO_LOG, &Level::WARN, &StackTraceMode::FULL)
+            parse_and_format(INFO_LOG, &Level::Warn, &StackTraceMode::Full)
                 .unwrap()
                 .is_none()
         );
         assert!(parse_and_format(
             &INFO_LOG.replace("INFO", "WARN"),
-            &Level::WARN,
-            &StackTraceMode::FULL
+            &Level::Warn,
+            &StackTraceMode::Full
         )
         .unwrap()
         .is_some());
 
         assert!(parse_and_format(
             &INFO_LOG.replace("INFO", "WARN"),
-            &Level::ERROR,
-            &StackTraceMode::FULL
+            &Level::Error,
+            &StackTraceMode::Full
         )
         .unwrap()
         .is_none());
 
         assert!(parse_and_format(
             &INFO_LOG.replace("INFO", "ERROR"),
-            &Level::WARN,
-            &StackTraceMode::FULL
+            &Level::Warn,
+            &StackTraceMode::Full
         )
         .unwrap()
         .is_some());
@@ -153,6 +154,6 @@ mod tests {
 
     #[test]
     fn test_parse_and_format_not_json() {
-        assert!(parse_and_format("test message", &Level::TRACE, &StackTraceMode::FULL).is_err());
+        assert!(parse_and_format("test message", &Level::Trace, &StackTraceMode::Full).is_err());
     }
 }

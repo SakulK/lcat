@@ -39,21 +39,21 @@ struct Opt {
 impl Opt {
     fn min_level(&self) -> Level {
         if self.warn {
-            Level::WARN
+            Level::Warn
         } else if self.error {
-            Level::ERROR
+            Level::Error
         } else if self.info {
-            Level::INFO
+            Level::Info
         } else {
-            Level::TRACE
+            Level::Trace
         }
     }
 
     fn stack_trace_mode(&self) -> StackTraceMode {
         if self.no_stacktraces {
-            StackTraceMode::SKIP
+            StackTraceMode::Skip
         } else {
-            StackTraceMode::FULL
+            StackTraceMode::Full
         }
     }
 
